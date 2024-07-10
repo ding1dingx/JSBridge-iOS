@@ -4,8 +4,8 @@
     return;
   }
 
-  const messageHandler = window.webkit.messageHandlers?.console;
-  if (!messageHandler) {
+  const consoleHandler = window.webkit.messageHandlers?.console;
+  if (!consoleHandler) {
     console.warn("consoleHandler not found, unable to send message to native.");
     return;
   }
@@ -29,7 +29,7 @@
       oriLogFunc.apply(window.console, args);
       args.forEach(obj => {
         const message = printObject(obj);
-        messageHandler.postMessage(message);
+        consoleHandler.postMessage(message);
       });
     };
   })(window.console.log);

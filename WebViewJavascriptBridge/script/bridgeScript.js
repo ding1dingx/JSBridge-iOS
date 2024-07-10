@@ -12,10 +12,11 @@
 
     callHandler(handlerName, data, responseCallback) {
       if (arguments.length === 2 && typeof data === 'function') {
+        // 两个参数，第二个参数是函数
         responseCallback = data;
         data = null;
       } else if (arguments.length === 3 && typeof data !== 'function' && typeof responseCallback === 'function') {
-        // 如果有三个参数，并且第二个参数不是函数，第三个参数是函数，则将其视为数据和回调函数
+        // 三个参数，第二个参数不是函数，第三个参数是函数，此处无需添加额外的处理代码，因为已经符合预期
       } else {
         // 如果参数数量或类型不匹配，则抛出错误
         console.error('Invalid arguments for callHandler:', arguments);

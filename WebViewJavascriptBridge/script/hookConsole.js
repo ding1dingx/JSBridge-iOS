@@ -3,49 +3,57 @@
     console.log("hook Console have already finished.");
     return;
   }
-  let printObject = function (obj) {
-    let output = "";
-    if (typeof obj === 'object') {
-      output += "{";
-      for (let key in obj) {
-        let value = obj[key];
-        output += \"\\\"\"+key+\"\\\"\"+\":\"+\"\\\"\"+value+\"\\\"\"+\",\";
-      }
-      output = output.substr(0, output.length - 1);
-      output += "}";
-    } else {
-      output = "" + obj;
+
+  const consoleHandler = window.webkit.messageHandlers.console;
+
+  // 检查 consoleHandler 是否存在
+  if (!consoleHandler || typeof consoleHandler !== 'object') {
+    console.warn('consoleHandler is not defined or not an object');
+    return;
+  }
+
+  function formatMessage(obj) {
+    let message = {
+      type: typeof obj,
+      value: obj
+    };
+
+    if (obj instanceof Date) {
+      message.value = obj.getTime();
+    } else if (obj instanceof Array) {
+      message.value = obj.toString();
+    } else if (typeof obj === 'object') {
+      message.value = JSON.stringify(obj, function (key, value) {
+        if (typeof value === 'object' && value !== null) {
+          return '<<Circular Reference>>';
+        }
+        return value;
+      });
     }
-    return output;
-  };
-  console.log("start hook Console.");
-  window.console.log = (function (oriLogFunc, printObject) {
+
+    return message;
+  }
+
+  window.console.log = (function (oriLogFunc) {
     window.hookConsole = 1;
-    return function (str) {
-      for (let i = 0; i < arguments.length; i++) {
+    return function () {
+      const len = arguments.length;
+      for (let i = 0; i < len; i++) {
         const obj = arguments[i];
         oriLogFunc.call(window.console, obj);
-        if (obj === null) {
-          const nullString = "null";
-          window.webkit.messageHandlers.console.postMessage(nullString);
-        } else if (typeof (obj) == "undefined") {
-          const undefinedString = "undefined";
-          window.webkit.messageHandlers.console.postMessage(undefinedString);
-        } else if (obj instanceof Promise) {
-          const promiseString = "This is a javascript Promise.";
-          window.webkit.messageHandlers.console.postMessage(promiseString);
-        } else if (obj instanceof Date) {
-          const dateString = obj.getTime().toString();
-          window.webkit.messageHandlers.console.postMessage(dateString);
-        } else if (obj instanceof Array) {
-          let arrayString = '[' + obj.toString() + ']';
-          window.webkit.messageHandlers.console.postMessage(arrayString);
-        } else {
-          const objs = printObject(obj);
-          window.webkit.messageHandlers.console.postMessage(objs);
+
+        try {
+          const message = formatMessage(obj);
+          const messageStr = JSON.stringify(message);
+          if (messageStr !== undefined && messageStr !== null) {
+            // 使用 encodeURIComponent 对 messageStr 进行转义处理，防止 XSS 攻击
+            consoleHandler.postMessage(encodeURIComponent(messageStr));
+          }
+        } catch (e) {
+          console.warn(`Error sending console log to native: ${e}`); // 使用模板字符串
         }
       }
     };
-  })(window.console.log, printObject);
+  })(window.console.log);
   console.log("end hook Console.");
 })(window);

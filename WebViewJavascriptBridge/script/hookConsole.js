@@ -17,8 +17,16 @@
       return obj.toLocaleString();
     } else if (Array.isArray(obj)) {
       return '[' + obj.map(item => printObject(item)).join(', ') + ']';
+    } else if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean' || obj === null || typeof obj === 'undefined' || typeof obj === 'symbol') {
+      return obj;
+    } else if (typeof obj === 'function') {
+      return obj.toString();
     } else {
-      return JSON.stringify(obj) || '';
+      try {
+        return JSON.stringify(obj) || '';
+      } catch (error) {
+        return '<<Circular Reference>>';
+      }
     }
   }
 

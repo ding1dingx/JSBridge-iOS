@@ -7,9 +7,9 @@
     handleMessageFromNative: handleMessageFromNative
   };
 
-  var messageHandlers = {};
-  var responseCallbacks = {};
-  var uniqueId = 1;
+  let messageHandlers = {};
+  let responseCallbacks = {};
+  let uniqueId = 1;
 
   function registerHandler(handlerName, handler) {
     messageHandlers[handlerName] = handler;
@@ -20,12 +20,12 @@
       responseCallback = data;
       data = null;
     }
-    doSend({ handlerName: handlerName, data: data }, responseCallback);
+    doSend({ handlerName, data }, responseCallback);
   }
 
   function doSend(message, responseCallback) {
     if (responseCallback) {
-      var callbackId = 'cb_' + (uniqueId++) + '_' + new Date().getTime();
+      const callbackId = 'cb_' + (uniqueId++) + '_' + new Date().getTime();
       responseCallbacks[callbackId] = responseCallback;
       message.callbackId = callbackId;
     }
@@ -33,8 +33,9 @@
   }
 
   function handleMessageFromNative(messageJSON) {
-    var message = JSON.parse(messageJSON);
-    var responseCallback;
+    const message = JSON.parse(messageJSON);
+    let responseCallback;
+
     if (message.responseId) {
       responseCallback = responseCallbacks[message.responseId];
       if (responseCallback) {
@@ -43,12 +44,12 @@
       }
     } else {
       if (message.callbackId) {
-        var callbackResponseId = message.callbackId;
+        const callbackResponseId = message.callbackId;
         responseCallback = function (responseData) {
           doSend({ handlerName: message.handlerName, responseId: callbackResponseId, responseData: responseData });
         };
       }
-      var handler = messageHandlers[message.handlerName];
+      let handler = messageHandlers[message.handlerName];
       if (handler) {
         handler(message.data, responseCallback);
       } else {

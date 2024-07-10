@@ -44,8 +44,7 @@
         } else {
           // 如果 responseCallbacks 中不存在 responseId 对应的回调函数，则输出警告信息，并执行默认的处理逻辑
           console.warn("[WebViewJavascriptBridge] => WARNING: no callback found for responseId:", message.responseId);
-          // 执行默认的处理逻辑，例如将消息丢弃
-          // ...
+          // 执行默认的处理逻辑，例如将消息丢弃...
         }
       } else {
         if (message.callbackId) {

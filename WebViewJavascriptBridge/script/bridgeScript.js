@@ -58,7 +58,7 @@
       if (handler) {
         handler(message.data, responseCallback);
       } else {
-        console.warn("WebViewJavascriptBridge: No handler for message from ObjC:", message);
+        console.warn("WebViewJavascriptBridge: No handler for message from ObjC/Swift:", message);
       }
     }
   };

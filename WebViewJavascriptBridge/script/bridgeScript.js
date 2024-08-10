@@ -1,11 +1,32 @@
-; (function (window) {
-  if (window.WebViewJavascriptBridge) {
-    return;
-  }
+;(function(window) {
+  if (window.WebViewJavascriptBridge) return;
 
   const messageHandlers = {};
   const responseCallbacks = {};
   let uniqueId = 1;
+
+  function doSend(message, responseCallback) {
+    if (responseCallback) {
+      const callbackId = `cb_${uniqueId++}_${Date.now()}`;
+      responseCallbacks[callbackId] = responseCallback;
+      message.callbackId = callbackId;
+    }
+    window.webkit.messageHandlers.normal.postMessage(JSON.stringify(message));
+  }
+
+  function handleResponse(responseId, responseData) {
+    const callback = responseCallbacks[responseId];
+    if (callback) {
+      callback(responseData);
+      delete responseCallbacks[responseId];
+    }
+  }
+
+  function createResponseCallback(handlerName, callbackId) {
+    return function(responseData) {
+      doSend({ handlerName, responseId: callbackId, responseData });
+    };
+  }
 
   window.WebViewJavascriptBridge = {
     registerHandler(handlerName, handler) {
@@ -17,66 +38,28 @@
         responseCallback = data;
         data = null;
       }
-      this.doSend({ handlerName, data }, responseCallback);
+      doSend({ handlerName, data }, responseCallback);
     },
 
     handleMessageFromNative(messageJSON) {
-      try {
-        const message = JSON.parse(messageJSON);
-        if (message.responseId) {
-          this.handleResponseMessage(message);
-        } else if (message.callbackId) {
-          this.handleCallbackMessage(message);
-        } else {
-          console.warn("[WebViewJavascriptBridge] => WARNING: message from Native does not contain callbackId:", message);
-        }
-      } catch (error) {
-        console.error("[WebViewJavascriptBridge] => ERROR: Failed to parse message from native:", error, messageJSON);
-      }
-    },
+      const message = JSON.parse(messageJSON);
 
-    doSend(sendMessage, responseCallback) {
-      try {
-        sendMessage.callbackId = responseCallback ? 'cb_' + (uniqueId++) + '_' + new Date().getTime() : null;
-        responseCallbacks[sendMessage.callbackId] = responseCallback || null;
-        if (window.webkit.messageHandlers.normal) {
-          window.webkit.messageHandlers.normal.postMessage(JSON.stringify(sendMessage));
-        } else {
-          console.error("[WebViewJavascriptBridge] => ERROR: Unable to find the 'normal' message handler in WKWebView.");
-        }
-      } catch (error) {
-        console.error("[WebViewJavascriptBridge] => ERROR: Failed to send message to native:", error, sendMessage);
+      if (message.responseId) {
+        handleResponse(message.responseId, message.responseData);
+        return;
       }
-    },
 
-    handleResponseMessage(message) {
-      const responseCallback = responseCallbacks[message.responseId];
-      if (responseCallback) {
-        try {
-          responseCallback(message.responseData);
-        } catch (error) {
-          console.error("[WebViewJavascriptBridge] => ERROR: Failed to execute response callback:", error, message);
-        } finally {
-          delete responseCallbacks[message.responseId];
-        }
+      let responseCallback;
+      if (message.callbackId) {
+        responseCallback = createResponseCallback(message.handlerName, message.callbackId);
       }
-    },
 
-    handleCallbackMessage(message) {
-      const callbackResponseId = message.callbackId;
       const handler = messageHandlers[message.handlerName];
       if (handler) {
-        try {
-          handler(message.data, responseData => {
-            this.doSend({ handlerName: message.handlerName, responseId: callbackResponseId, responseData });
-          });
-        } catch (error) {
-          console.error("[WebViewJavascriptBridge] => ERROR: Failed to execute callback handler:", error, message);
-        }
+        handler(message.data, responseCallback);
       } else {
-        console.warn("[WebViewJavascriptBridge] => WARNING: no handler for message from Swift/ObjC:", message);
+        console.warn("WebViewJavascriptBridge: No handler for message from ObjC:", message);
       }
     }
   };
-
 })(window);

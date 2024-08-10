@@ -1,4 +1,4 @@
-;(function(window) {
+;(function (window) {
   if (window.WebViewJavascriptBridge) return;
 
   const messageHandlers = {};
@@ -23,7 +23,7 @@
   }
 
   function createResponseCallback(handlerName, callbackId) {
-    return function(responseData) {
+    return function (responseData) {
       doSend({ handlerName, responseId: callbackId, responseData });
     };
   }

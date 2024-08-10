@@ -45,7 +45,7 @@ class MainViewController: UIViewController {
         title = "WebView Demo"
         setupWebView()
         setupBridge()
-        setupButton()
+        setupButtons()
         loadHTMLContent()
     }
 
@@ -88,26 +88,40 @@ class MainViewController: UIViewController {
         }
     }
 
-    private func setupButton() {
-        let button = UIButton(type: .system)
-        button.setTitle("Call JavaScript Functions", for: .normal)
-        button.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(button)
+    private func setupButtons() {
+        let button1 = UIButton(type: .system)
+        button1.setTitle("Call GetToken", for: .normal)
+        button1.addTarget(self, action: #selector(getTokenButtonTapped), for: .touchUpInside)
+
+        let button2 = UIButton(type: .system)
+        button2.setTitle("Call AsyncCall", for: .normal)
+        button2.addTarget(self, action: #selector(asyncCallButtonTapped), for: .touchUpInside)
+
+        let stackView = UIStackView(arrangedSubviews: [button1, button2])
+        stackView.axis = .horizontal
+        stackView.distribution = .fillEqually
+        stackView.spacing = 20
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+
+        view.addSubview(stackView)
 
         NSLayoutConstraint.activate([
-            button.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            button.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+            stackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            stackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            stackView.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -40)
         ])
     }
 
-    @objc private func buttonTapped() {
+    @objc private func getTokenButtonTapped() {
         callGetToken()
+    }
+
+    @objc private func asyncCallButtonTapped() {
         callAsyncCall()
     }
 
     private func callGetToken() {
-        bridge?.call(handlerName: "GetToken", data: ["key": "value"]) { response in
+        bridge?.call(handlerName: "GetToken", data: ["action": "GetToken"]) { response in
             if let token = (response as? [String: Any])?["token"] as? String {
                 dlog("Received token from JavaScript: \(token)")
             } else {
@@ -117,7 +131,7 @@ class MainViewController: UIViewController {
     }
 
     private func callAsyncCall() {
-        bridge?.call(handlerName: "AsyncCall", data: ["action": "doSomething"]) { response in
+        bridge?.call(handlerName: "AsyncCall", data: ["action": "AsyncCall"]) { response in
             if let result = (response as? [String: Any])?["token"] as? String {
                 dlog("Received async result from JavaScript: \(result)")
             } else {

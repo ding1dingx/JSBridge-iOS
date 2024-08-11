@@ -10,9 +10,11 @@
     if (obj instanceof Promise) return "This is a javascript Promise.";
     if (obj instanceof Date) return obj.getTime().toString();
     if (Array.isArray(obj)) return `[${obj.toString()}]`;
-    if (typeof obj === 'object') {
-      const entries = Object.entries(obj).map(([key, value]) => `"${key}":"${value}"`);
-      return `{${entries.join(',')}}`;
+    if (typeof obj === "object") {
+      const entries = Object.entries(obj).map(
+        ([key, value]) => `"${key}":"${value}"`
+      );
+      return `{${entries.join(",")}}`;
     }
     return String(obj);
   }
@@ -23,7 +25,6 @@
 
   window.console.log = function (...args) {
     window.isConsoleHooked = true;
-
     args.forEach(obj => {
       originalConsoleLog.call(window.console, obj);
       const message = printObject(obj);

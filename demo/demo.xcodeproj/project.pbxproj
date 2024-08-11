@@ -11,7 +11,7 @@
 		4CD225D02C6716A50012FCB4 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CD225CF2C6716A50012FCB4 /* MainViewController.swift */; };
 		4CD225D52C6716A60012FCB4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4CD225D42C6716A60012FCB4 /* Assets.xcassets */; };
 		4CD225E02C6718E00012FCB4 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4CD225DF2C6718E00012FCB4 /* Launch Screen.storyboard */; };
-		4CD225E82C6719320012FCB4 /* bridgeScript.js in Resources */ = {isa = PBXBuildFile; fileRef = 4CD225E12C6719320012FCB4 /* bridgeScript.js */; };
+		4CD225E82C6719320012FCB4 /* bridge.js in Resources */ = {isa = PBXBuildFile; fileRef = 4CD225E12C6719320012FCB4 /* bridge.js */; };
 		4CD225E92C6719320012FCB4 /* hookConsole.js in Resources */ = {isa = PBXBuildFile; fileRef = 4CD225E22C6719320012FCB4 /* hookConsole.js */; };
 		4CD225EA2C6719320012FCB4 /* JavascriptCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CD225E42C6719320012FCB4 /* JavascriptCode.swift */; };
 		4CD225EB2C6719320012FCB4 /* WebViewJavascriptBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CD225E52C6719320012FCB4 /* WebViewJavascriptBridge.swift */; };
@@ -27,7 +27,7 @@
 		4CD225D42C6716A60012FCB4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4CD225D92C6716A60012FCB4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4CD225DF2C6718E00012FCB4 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
-		4CD225E12C6719320012FCB4 /* bridgeScript.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = bridgeScript.js; sourceTree = "<group>"; };
+		4CD225E12C6719320012FCB4 /* bridge.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = bridge.js; sourceTree = "<group>"; };
 		4CD225E22C6719320012FCB4 /* hookConsole.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = hookConsole.js; sourceTree = "<group>"; };
 		4CD225E42C6719320012FCB4 /* JavascriptCode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JavascriptCode.swift; sourceTree = "<group>"; };
 		4CD225E52C6719320012FCB4 /* WebViewJavascriptBridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebViewJavascriptBridge.swift; sourceTree = "<group>"; };
@@ -81,7 +81,7 @@
 		4CD225E32C6719320012FCB4 /* script */ = {
 			isa = PBXGroup;
 			children = (
-				4CD225E12C6719320012FCB4 /* bridgeScript.js */,
+				4CD225E12C6719320012FCB4 /* bridge.js */,
 				4CD225E22C6719320012FCB4 /* hookConsole.js */,
 			);
 			path = script;
@@ -159,7 +159,7 @@
 			files = (
 				4CD225E02C6718E00012FCB4 /* Launch Screen.storyboard in Resources */,
 				4CD225E92C6719320012FCB4 /* hookConsole.js in Resources */,
-				4CD225E82C6719320012FCB4 /* bridgeScript.js in Resources */,
+				4CD225E82C6719320012FCB4 /* bridge.js in Resources */,
 				4CD225F02C6720450012FCB4 /* index.html in Resources */,
 				4CD225D52C6716A60012FCB4 /* Assets.xcassets in Resources */,
 			);

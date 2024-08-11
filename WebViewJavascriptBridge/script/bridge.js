@@ -34,7 +34,7 @@
     },
 
     callHandler(handlerName, data, responseCallback) {
-      if (arguments.length === 2 && typeof data === 'function') {
+      if (arguments.length === 2 && typeof data === "function") {
         responseCallback = data;
         data = null;
       }
@@ -51,15 +51,21 @@
 
       let responseCallback;
       if (message.callbackId) {
-        responseCallback = createResponseCallback(message.handlerName, message.callbackId);
+        responseCallback = createResponseCallback(
+          message.handlerName,
+          message.callbackId
+        );
       }
 
       const handler = messageHandlers[message.handlerName];
       if (handler) {
         handler(message.data, responseCallback);
       } else {
-        console.warn("WebViewJavascriptBridge: No handler for message from ObjC/Swift:", message);
+        console.warn(
+          "WebViewJavascriptBridge: No handler for message from ObjC/Swift:",
+          message
+        );
       }
-    }
+    },
   };
 })(window);

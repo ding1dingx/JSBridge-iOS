@@ -9,7 +9,7 @@ import Foundation
 
 enum JavascriptCode {
     public static func bridge() -> String {
-        let bridgeScript = """
+        let bridge = """
         ;(function (window) {
           if (window.WebViewJavascriptBridge) return;
 
@@ -46,7 +46,7 @@ enum JavascriptCode {
             },
 
             callHandler(handlerName, data, responseCallback) {
-              if (arguments.length === 2 && typeof data === 'function') {
+              if (arguments.length === 2 && typeof data === "function") {
                 responseCallback = data;
                 data = null;
               }
@@ -63,20 +63,26 @@ enum JavascriptCode {
 
               let responseCallback;
               if (message.callbackId) {
-                responseCallback = createResponseCallback(message.handlerName, message.callbackId);
+                responseCallback = createResponseCallback(
+                  message.handlerName,
+                  message.callbackId
+                );
               }
 
               const handler = messageHandlers[message.handlerName];
               if (handler) {
                 handler(message.data, responseCallback);
               } else {
-                console.warn("WebViewJavascriptBridge: No handler for message from ObjC/Swift:", message);
+                console.warn(
+                  "WebViewJavascriptBridge: No handler for message from ObjC/Swift:",
+                  message
+                );
               }
-            }
+            },
           };
         })(window);
         """
-        return bridgeScript
+        return bridge
     }
 
     public static func hookConsole() -> String {
@@ -93,9 +99,11 @@ enum JavascriptCode {
             if (obj instanceof Promise) return "This is a javascript Promise.";
             if (obj instanceof Date) return obj.getTime().toString();
             if (Array.isArray(obj)) return `[${obj.toString()}]`;
-            if (typeof obj === 'object') {
-              const entries = Object.entries(obj).map(([key, value]) => `"${key}":"${value}"`);
-              return `{${entries.join(',')}}`;
+            if (typeof obj === "object") {
+              const entries = Object.entries(obj).map(
+                ([key, value]) => `"${key}":"${value}"`
+              );
+              return `{${entries.join(",")}}`;
             }
             return String(obj);
           }
@@ -106,7 +114,6 @@ enum JavascriptCode {
 
           window.console.log = function (...args) {
             window.isConsoleHooked = true;
-
             args.forEach(obj => {
               originalConsoleLog.call(window.console, obj);
               const message = printObject(obj);

@@ -46,17 +46,19 @@ public class WebViewJavascriptBridgeBase: NSObject {
     func reset() {
         responseCallbacks = [String: Callback]()
         uniqueId = 0
+        log("reset...")
     }
 
     func send(handlerName: String, data: Any?, callback: Callback?) {
-        var message = [String: Any]()
-        message["handlerName"] = handlerName
+        var message: [String: Any] = [
+            "handlerName": handlerName
+        ]
 
-        if data != nil {
+        if let data = data {
             message["data"] = data
         }
 
-        if callback != nil {
+        if let callback = callback {
             uniqueId += 1
             let callbackID = "native_ios_cb_\(uniqueId)"
             responseCallbacks[callbackID] = callback

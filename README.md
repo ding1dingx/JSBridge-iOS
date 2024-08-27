@@ -1,4 +1,4 @@
-# SDBridgeSwift
+# JsBridge-iOS
 
 Tiny JavaScript Bridge for iOS.
 

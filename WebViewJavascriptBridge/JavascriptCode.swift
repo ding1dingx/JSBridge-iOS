@@ -81,7 +81,7 @@ enum JavascriptCode {
             },
           };
         })(window);
-        """
+        """.trimIndent()
         return bridge
     }
 
@@ -121,7 +121,44 @@ enum JavascriptCode {
 
           console.log('Console hook has been applied successfully.');
         })(window);
-        """
+        """.trimIndent()
         return hookConsole
+    }
+}
+
+extension String {
+    // Implement Kotlin-like `trimIndent()` for Swift
+    func trimIndent() -> String {
+        // Split the string into lines
+        let lines = self.components(separatedBy: .newlines)
+
+        // Automatically detect the minimum indentation
+        let minIndent = lines.compactMap { line in
+            // Ignore empty lines
+            guard !line.trimmingCharacters(in: .whitespaces).isEmpty else {
+                return nil
+            }
+
+            // Count the leading spaces of each line
+            let leadingSpaces = line.prefix { $0 == " " }.count
+            return leadingSpaces
+        }.min() ?? 0
+
+        // Remove the indentation from each line
+        var trimmedLines = lines.map { line in
+            // Ignore empty lines
+            guard !line.trimmingCharacters(in: .whitespaces).isEmpty else {
+                return line
+            }
+
+            // Remove the leading indentation
+            return String(line.dropFirst(minIndent))
+        }
+
+        // Remove all empty lines
+        trimmedLines = trimmedLines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+
+        // Unify the line endings to LF
+        return trimmedLines.joined(separator: "\n")
     }
 }

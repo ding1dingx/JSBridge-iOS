@@ -1,4 +1,4 @@
-# JsBridge-iOS
+# JSBridge-iOS
 
 Tiny JavaScript Bridge for iOS.
 

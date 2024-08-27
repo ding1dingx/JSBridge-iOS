@@ -46,7 +46,15 @@ class MainViewController: UIViewController {
         setupWebView()
         setupBridge()
         setupButtons()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         loadHTMLContent()
+    }
+    
+    deinit {
+        bridge?.reset()
     }
 
     private func setupWebView() {

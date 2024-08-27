@@ -30,6 +30,7 @@ public class WebViewJavascriptBridge: NSObject {
     private weak var webView: WKWebView?
     private var base: WebViewJavascriptBridgeBase!
     public var consolePipeClosure: ConsolePipeClosure?
+
     public init(webView: WKWebView, _ otherJSCode: String = "", injectionTime: WKUserScriptInjectionTime = .atDocumentStart) {
         super.init()
         self.webView = webView
@@ -40,7 +41,9 @@ public class WebViewJavascriptBridge: NSObject {
     }
 
     deinit {
+        #if DEBUG
         print("\(type(of: self)) release")
+        #endif
         removeScriptMessageHandlers()
     }
 
@@ -97,8 +100,8 @@ extension WebViewJavascriptBridge: WKScriptMessageHandler {
             consolePipeClosure?(message.body)
         } else if message.name == PipeType.normal.rawValue {
             let body = message.body as? String
-            guard let resultStr = body else { return }
-            base.flush(messageQueueString: resultStr)
+            guard let resultString = body else { return }
+            base.flush(messageQueueString: resultString)
         }
     }
 }

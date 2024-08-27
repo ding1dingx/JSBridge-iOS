@@ -1,6 +1,12 @@
 ;(function (window) {
   if (window.WebViewJavascriptBridge) return;
 
+  if (!window.onerror) {
+    window.onerror = function (msg, url, line) {
+      console.log('WKWebViewJavascriptBridge: ERROR:' + msg + '@' + url + ':' + line);
+    };
+  }
+
   const messageHandlers = {};
   const responseCallbacks = {};
   let uniqueId = 1;
@@ -34,7 +40,7 @@
     },
 
     callHandler(handlerName, data, responseCallback) {
-      if (arguments.length === 2 && typeof data === "function") {
+      if (arguments.length === 2 && typeof data === 'function') {
         responseCallback = data;
         data = null;
       }
@@ -51,20 +57,14 @@
 
       let responseCallback;
       if (message.callbackId) {
-        responseCallback = createResponseCallback(
-          message.handlerName,
-          message.callbackId
-        );
+        responseCallback = createResponseCallback(message.handlerName, message.callbackId);
       }
 
       const handler = messageHandlers[message.handlerName];
       if (handler) {
         handler(message.data, responseCallback);
       } else {
-        console.warn(
-          "WebViewJavascriptBridge: No handler for message from ObjC/Swift:",
-          message
-        );
+        console.warn('WebViewJavascriptBridge: No handler for message from iOS:', message);
       }
     },
   };

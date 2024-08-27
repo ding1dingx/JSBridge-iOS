@@ -13,6 +13,12 @@ enum JavascriptCode {
         ;(function (window) {
           if (window.WebViewJavascriptBridge) return;
 
+          if (!window.onerror) {
+            window.onerror = function (msg, url, line) {
+              console.log('WKWebViewJavascriptBridge: ERROR:' + msg + '@' + url + ':' + line);
+            };
+          }
+
           const messageHandlers = {};
           const responseCallbacks = {};
           let uniqueId = 1;
@@ -46,7 +52,7 @@ enum JavascriptCode {
             },
 
             callHandler(handlerName, data, responseCallback) {
-              if (arguments.length === 2 && typeof data === "function") {
+              if (arguments.length === 2 && typeof data === 'function') {
                 responseCallback = data;
                 data = null;
               }
@@ -63,20 +69,14 @@ enum JavascriptCode {
 
               let responseCallback;
               if (message.callbackId) {
-                responseCallback = createResponseCallback(
-                  message.handlerName,
-                  message.callbackId
-                );
+                responseCallback = createResponseCallback(message.handlerName, message.callbackId);
               }
 
               const handler = messageHandlers[message.handlerName];
               if (handler) {
                 handler(message.data, responseCallback);
               } else {
-                console.warn(
-                  "WebViewJavascriptBridge: No handler for message from ObjC/Swift:",
-                  message
-                );
+                console.warn('WebViewJavascriptBridge: No handler for message from iOS:', message);
               }
             },
           };
@@ -89,26 +89,24 @@ enum JavascriptCode {
         let hookConsole = """
         ;(function (window) {
           if (window.isConsoleHooked) {
-            console.log("Console hook has already been applied.");
+            console.log('Console hook has already been applied.');
             return;
           }
 
           function printObject(obj) {
-            if (obj === null) return "null";
-            if (typeof obj === "undefined") return "undefined";
-            if (obj instanceof Promise) return "This is a javascript Promise.";
+            if (obj === null) return 'null';
+            if (typeof obj === 'undefined') return 'undefined';
+            if (obj instanceof Promise) return 'This is a javascript Promise.';
             if (obj instanceof Date) return obj.getTime().toString();
             if (Array.isArray(obj)) return `[${obj.toString()}]`;
-            if (typeof obj === "object") {
-              const entries = Object.entries(obj).map(
-                ([key, value]) => `"${key}":"${value}"`
-              );
-              return `{${entries.join(",")}}`;
+            if (typeof obj === 'object') {
+              const entries = Object.entries(obj).map(([key, value]) => `"${key}":"${value}"`);
+              return `{${entries.join(',')}}`;
             }
             return String(obj);
           }
 
-          console.log("Starting console hook application.");
+          console.log('Starting console hook application.');
 
           const originalConsoleLog = window.console.log;
 
@@ -121,7 +119,7 @@ enum JavascriptCode {
             });
           };
 
-          console.log("Console hook has been applied successfully.");
+          console.log('Console hook has been applied successfully.');
         })(window);
         """
         return hookConsole

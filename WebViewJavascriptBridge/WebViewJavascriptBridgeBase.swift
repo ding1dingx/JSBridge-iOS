@@ -31,7 +31,11 @@ extension WebViewJavascriptBridgeBaseDelegate {
 }
 
 public class WebViewJavascriptBridgeBase: NSObject {
-    var isLogEnable = false
+    public var isLogEnable: Bool = false {
+        didSet {
+            updateLogStatus()
+        }
+    }
 
     public typealias Callback = (_ responseData: Any?) -> Void
     public typealias Handler = (_ parameters: [String: Any]?, _ callback: Callback?) -> Void
@@ -41,18 +45,16 @@ public class WebViewJavascriptBridgeBase: NSObject {
 
     var responseCallbacks = [String: Callback]()
     var messageHandlers = [String: Handler]()
-    var uniqueId = 0
+    private var uniqueId: Int = 0
 
     func reset() {
-        responseCallbacks = [String: Callback]()
+        responseCallbacks.removeAll()
         uniqueId = 0
         log("reset...")
     }
 
     func send(handlerName: String, data: Any?, callback: Callback?) {
-        var message: [String: Any] = [
-            "handlerName": handlerName
-        ]
+        var message: Message = ["handlerName": handlerName]
 
         if let data = data {
             message["data"] = data
@@ -74,15 +76,15 @@ public class WebViewJavascriptBridgeBase: NSObject {
         }
 
         if let responseID = message["responseId"] as? String {
-            guard let callback = responseCallbacks[responseID] else { return }
-            callback(message["responseData"])
-            responseCallbacks.removeValue(forKey: responseID)
+            if let callback = responseCallbacks.removeValue(forKey: responseID) {
+                callback(message["responseData"])
+            }
         } else {
             var callback: Callback?
-            if let callbackID = message["callbackId"] {
-                callback = { (_ responseData: Any?) in
-                    let msg = ["responseId": callbackID, "responseData": responseData ?? NSNull()] as Message
-                    self.dispatch(message: msg)
+            if let callbackID = message["callbackId"] as? String {
+                callback = { [weak self] responseData in
+                    let msg: Message = ["responseId": callbackID, "responseData": responseData ?? NSNull()]
+                    self?.dispatch(message: msg)
                 }
             } else {
                 callback = { (_: Any?) in
@@ -90,30 +92,21 @@ public class WebViewJavascriptBridgeBase: NSObject {
                 }
             }
 
-            guard let handlerName = message["handlerName"] as? String else { return }
-            guard let handler = messageHandlers[handlerName] else {
+            if let handlerName = message["handlerName"] as? String,
+               let handler = messageHandlers[handlerName]
+            {
+                handler(message["data"] as? [String: Any], callback)
+            } else {
                 log("NoHandlerException, No handler for message from JS: \(message)")
-                return
             }
-
-            handler(message["data"] as? [String: Any], callback)
         }
     }
 
     private func dispatch(message: Message) {
-        guard var messageJSON = serialize(message: message, pretty: false) else { return }
-
-        messageJSON = messageJSON.replacingOccurrences(of: "\\", with: "\\\\")
-        messageJSON = messageJSON.replacingOccurrences(of: "\"", with: "\\\"")
-        messageJSON = messageJSON.replacingOccurrences(of: "\'", with: "\\\'")
-        messageJSON = messageJSON.replacingOccurrences(of: "\n", with: "\\n")
-        messageJSON = messageJSON.replacingOccurrences(of: "\r", with: "\\r")
-        messageJSON = messageJSON.replacingOccurrences(of: "\u{000C}", with: "\\f")
-        messageJSON = messageJSON.replacingOccurrences(of: "\u{2028}", with: "\\u2028")
-        messageJSON = messageJSON.replacingOccurrences(of: "\u{2029}", with: "\\u2029")
-
-        let javascriptCommand = "WebViewJavascriptBridge.handleMessageFromNative('\(messageJSON)');"
-        if Thread.current.isMainThread {
+        guard let messageJSON = serialize(message: message, pretty: false) else { return }
+        let escapedMessageJSON = escapeJSONString(messageJSON)
+        let javascriptCommand = "WebViewJavascriptBridge.handleMessageFromNative('\(escapedMessageJSON)');"
+        if Thread.isMainThread {
             delegate?.evaluateJavascript(javascript: javascriptCommand)
         } else {
             DispatchQueue.main.async {
@@ -125,25 +118,37 @@ public class WebViewJavascriptBridgeBase: NSObject {
     // MARK: - JSON
 
     private func serialize(message: Message, pretty: Bool) -> String? {
-        var result: String?
         do {
-            let data = try JSONSerialization.data(withJSONObject: message, options: pretty ? .prettyPrinted : JSONSerialization.WritingOptions(rawValue: 0))
-            result = String(data: data, encoding: .utf8)
+            let data = try JSONSerialization.data(withJSONObject: message, options: pretty ? .prettyPrinted : [])
+            return String(data: data, encoding: .utf8)
         } catch {
-            log(error)
+            log("serialize fail: \(error)")
+            return nil
         }
-        return result
     }
 
     private func deserialize(messageJSON: String) -> Message? {
-        var result = Message()
-        guard let data = messageJSON.data(using: .utf8) else { return nil }
         do {
-            result = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as! WebViewJavascriptBridgeBase.Message
+            if let data = messageJSON.data(using: .utf8) {
+                return try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? Message
+            }
         } catch {
-            log(error)
+            log("deserialize fail: \(error)")
         }
-        return result
+        return nil
+    }
+
+    private func escapeJSONString(_ string: String) -> String {
+        var escapedString = string
+        escapedString = escapedString.replacingOccurrences(of: "\\", with: "\\\\")
+        escapedString = escapedString.replacingOccurrences(of: "\"", with: "\\\"")
+        escapedString = escapedString.replacingOccurrences(of: "\'", with: "\\\'")
+        escapedString = escapedString.replacingOccurrences(of: "\n", with: "\\n")
+        escapedString = escapedString.replacingOccurrences(of: "\r", with: "\\r")
+        escapedString = escapedString.replacingOccurrences(of: "\u{000C}", with: "\\f")
+        escapedString = escapedString.replacingOccurrences(of: "\u{2028}", with: "\\u2028")
+        escapedString = escapedString.replacingOccurrences(of: "\u{2029}", with: "\\u2029")
+        return escapedString
     }
 
     // MARK: - Log
@@ -156,6 +161,12 @@ public class WebViewJavascriptBridgeBase: NSObject {
 
         let fileName = (file as NSString).lastPathComponent
         print("\(fileName):\(line) \(function) | \(message)")
+        #endif
+    }
+
+    private func updateLogStatus() {
+        #if DEBUG
+        log("Log status updated: \(isLogEnable)")
         #endif
     }
 }

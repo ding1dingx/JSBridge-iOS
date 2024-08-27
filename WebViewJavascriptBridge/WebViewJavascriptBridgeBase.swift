@@ -31,13 +31,18 @@ extension WebViewJavascriptBridgeBaseDelegate {
 }
 
 public class WebViewJavascriptBridgeBase: NSObject {
+    var isLogEnable = false
+
     public typealias Callback = (_ responseData: Any?) -> Void
     public typealias Handler = (_ parameters: [String: Any]?, _ callback: Callback?) -> Void
     public typealias Message = [String: Any]
+
     weak var delegate: WebViewJavascriptBridgeBaseDelegate?
+
     var responseCallbacks = [String: Callback]()
     var messageHandlers = [String: Handler]()
     var uniqueId = 0
+
     func reset() {
         responseCallbacks = [String: Callback]()
         uniqueId = 0
@@ -46,15 +51,18 @@ public class WebViewJavascriptBridgeBase: NSObject {
     func send(handlerName: String, data: Any?, callback: Callback?) {
         var message = [String: Any]()
         message["handlerName"] = handlerName
+
         if data != nil {
             message["data"] = data
         }
+
         if callback != nil {
             uniqueId += 1
-            let callbackID = "objc_cb_\(uniqueId)"
+            let callbackID = "native_ios_cb_\(uniqueId)"
             responseCallbacks[callbackID] = callback
             message["callbackId"] = callbackID
         }
+
         dispatch(message: message)
     }
 
@@ -62,6 +70,7 @@ public class WebViewJavascriptBridgeBase: NSObject {
         guard let message = deserialize(messageJSON: messageQueueString) else {
             return
         }
+
         if let responseID = message["responseId"] as? String {
             guard let callback = responseCallbacks[responseID] else { return }
             callback(message["responseData"])
@@ -76,14 +85,15 @@ public class WebViewJavascriptBridgeBase: NSObject {
             } else {
                 callback = { (_: Any?) in
                     // no logic
-                    print("no logic")
                 }
             }
+
             guard let handlerName = message["handlerName"] as? String else { return }
             guard let handler = messageHandlers[handlerName] else {
-                print("NoHandlerException, No handler for message from JS: \(message)")
+                log("NoHandlerException, No handler for message from JS: \(message)")
                 return
             }
+
             handler(message["data"] as? [String: Any], callback)
         }
     }
@@ -118,7 +128,7 @@ public class WebViewJavascriptBridgeBase: NSObject {
             let data = try JSONSerialization.data(withJSONObject: message, options: pretty ? .prettyPrinted : JSONSerialization.WritingOptions(rawValue: 0))
             result = String(data: data, encoding: .utf8)
         } catch {
-            print(error)
+            log(error)
         }
         return result
     }
@@ -129,8 +139,21 @@ public class WebViewJavascriptBridgeBase: NSObject {
         do {
             result = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as! WebViewJavascriptBridgeBase.Message
         } catch {
-            print(error)
+            log(error)
         }
         return result
+    }
+
+    // MARK: - Log
+
+    private func log<T>(_ message: T, file: String = #file, function: String = #function, line: Int = #line) {
+        #if DEBUG
+        guard isLogEnable else {
+            return
+        }
+
+        let fileName = (file as NSString).lastPathComponent
+        print("\(fileName):\(line) \(function) | \(message)")
+        #endif
     }
 }

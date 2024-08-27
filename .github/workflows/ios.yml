@@ -17,4 +17,4 @@ jobs:
      
       - name: Build with Xcode
         working-directory: ./demo
-        run: xcodebuild -workspace demo.xcodeproj -scheme demo -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15'
+        run: xcodebuild -project demo.xcodeproj -scheme demo -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15'

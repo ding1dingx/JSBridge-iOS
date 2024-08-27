@@ -52,7 +52,7 @@ class MainViewController: UIViewController {
         super.viewWillAppear(animated)
         loadHTMLContent()
     }
-    
+
     deinit {
         bridge?.reset()
     }
@@ -71,6 +71,7 @@ class MainViewController: UIViewController {
 
     private func setupBridge() {
         bridge = WebViewJavascriptBridge(webView: webView)
+        bridge?.isLogEnable = true
 
         #if DEBUG
         // This can get javascript console.log

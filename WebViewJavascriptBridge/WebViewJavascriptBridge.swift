@@ -28,14 +28,26 @@ public typealias ConsolePipeClosure = (Any?) -> Void
 
 public class WebViewJavascriptBridge: NSObject {
     private weak var webView: WKWebView?
-    private var base: WebViewJavascriptBridgeBase!
+    private lazy var base: WebViewJavascriptBridgeBase = {
+        let base = WebViewJavascriptBridgeBase()
+        base.delegate = self
+        return base
+    }()
+
     public var consolePipeClosure: ConsolePipeClosure?
+
+    public var isLogEnable: Bool {
+        get {
+            return base.isLogEnable
+        }
+        set(newValue) {
+            base.isLogEnable = newValue
+        }
+    }
 
     public init(webView: WKWebView, _ otherJSCode: String = "", injectionTime: WKUserScriptInjectionTime = .atDocumentStart) {
         super.init()
         self.webView = webView
-        base = WebViewJavascriptBridgeBase()
-        base.delegate = self
         addScriptMessageHandlers()
         injectJavascriptFile(otherJSCode, injectionTime: injectionTime)
     }
@@ -66,25 +78,30 @@ public class WebViewJavascriptBridge: NSObject {
     }
 
     private func injectJavascriptFile(_ otherJSCode: String = "", injectionTime: WKUserScriptInjectionTime = .atDocumentStart) {
-        let bridgeJS = JavascriptCode.bridge()
-        let hookConsoleJS = JavascriptCode.hookConsole()
-        let finalJS = "\(bridgeJS)" + "\(hookConsoleJS)"
-        let userScript = WKUserScript(source: finalJS, injectionTime: injectionTime, forMainFrameOnly: true)
-        webView?.configuration.userContentController.addUserScript(userScript)
+        var userScripts: [WKUserScript] = [
+            WKUserScript(source: JavascriptCode.bridge(), injectionTime: injectionTime, forMainFrameOnly: true),
+            WKUserScript(source: JavascriptCode.hookConsole(), injectionTime: injectionTime, forMainFrameOnly: true)
+        ]
+
         if !otherJSCode.isEmpty {
-            let otherScript = WKUserScript(source: otherJSCode, injectionTime: .atDocumentStart, forMainFrameOnly: true)
-            webView?.configuration.userContentController.addUserScript(otherScript)
+            userScripts.append(WKUserScript(source: otherJSCode, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
+
+        for userScript in userScripts {
+            webView?.configuration.userContentController.addUserScript(userScript)
         }
     }
 
     private func addScriptMessageHandlers() {
-        webView?.configuration.userContentController.add(LeakAvoider(delegate: self), name: PipeType.normal.rawValue)
-        webView?.configuration.userContentController.add(LeakAvoider(delegate: self), name: PipeType.console.rawValue)
+        for pipeType in [PipeType.normal, PipeType.console] {
+            webView?.configuration.userContentController.add(LeakAvoider(delegate: self), name: pipeType.rawValue)
+        }
     }
 
     private func removeScriptMessageHandlers() {
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: PipeType.normal.rawValue)
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: PipeType.console.rawValue)
+        for pipeType in [PipeType.normal, PipeType.console] {
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: pipeType.rawValue)
+        }
     }
 }
 
